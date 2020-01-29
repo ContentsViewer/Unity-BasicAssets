@@ -13,9 +13,20 @@ public class FontSelector : MonoBehaviour {
 
 	public List<FontSetting> fontSettings;
 
-	async void Start () {
-        await new WaitForEndOfFrame();
+	//async void Start () {
+ //       await new WaitForEndOfFrame();
 
+	//	foreach (var it in fontSettings)
+	//	{
+	//		foreach (var text in it.texts)
+	//		{
+	//			text.font = it.fontList[LanguagePackManager.Instance.LanguageID];
+	//		}
+	//	}
+	//}
+
+	void Start()
+	{
 		foreach (var it in fontSettings)
 		{
 			foreach (var text in it.texts)
