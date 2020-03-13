@@ -19,6 +19,30 @@ public class UILineRendererUnit : MaskableGraphic
 
     protected override void OnPopulateMesh(VertexHelper vh)
     {
+        /*
+         * y
+         * ↑
+         *  →x
+         *  
+         *  twisted left:
+         *                    p21l *
+         *                        /  *p2
+         *                       /     /
+         *                      /     /
+         *             int(v2) /     /
+         *          v1 +------*     /
+         *             *p0      *p1/  
+         *   ↓ norm0   +--------+- *p11r(v4)
+         *             v0      p10r(v3)
+         *
+         *  straight:
+         *  
+         *    v1     p10l p11l (v2)
+         *    +----------+-----------
+         *    *p0        *p1        *p2
+         *    +----------+-----------
+         *    v0     p10r p11r (v3)
+         */
         vh.Clear();
 
         UIVertex vert = new UIVertex();
@@ -45,7 +69,6 @@ public class UILineRendererUnit : MaskableGraphic
                 vert0idx = 0;
 
                 vert.position = vert0.Value;
-                //vert.uv0 = new Vector2(1, 0);
                 vh.AddVert(vert);
 
                 idx++;
@@ -56,7 +79,6 @@ public class UILineRendererUnit : MaskableGraphic
                 vert1idx = 1;
 
                 vert.position = vert1.Value;
-                //vert.uv0 = new Vector2(0, 0);
                 vh.AddVert(vert);
 
                 idx++;
@@ -80,78 +102,100 @@ public class UILineRendererUnit : MaskableGraphic
                 var point21r = point2 + norm1 * width;
                 var point21l = point2 - norm1 * width;
 
-                //Vector2 vert4uv = new Vector2(0, 0);
 
-                bool isTwistedRight = false;
                 Vector2 intersection;
                 if (CalLineSegmentsIntersection(vert0.Value, point10r, point11r, point21r, out intersection))
                 {
-                    isTwistedRight = true;
-                    vert3 = intersection;
-                }
-                else
-                {
-                    vert3 = point10r;
-                    vert4 = point11r;
-                    //vert4uv = new Vector2(0, 1);
-                }
+                    // twisted right
 
-                if (CalLineSegmentsIntersection(vert1.Value, point10l, point11l, point21l, out intersection))
-                {
-                    isTwistedRight = false;
-                    vert2 = intersection;
-                }
-                else
-                {
+                    vert3 = intersection;
                     vert2 = point10l;
                     vert4 = point11l;
-                    //vert4uv = new Vector2(1, 1);
-                }
 
 
-                vert.position = vert2;
-                //vert.uv0 = new Vector2(0, 1);
-                vh.AddVert(vert);
+                    vert.position = vert2;
+                    vh.AddVert(vert);
 
-                vert.position = vert3;
-                //vert.uv0 = new Vector2(1, 1);
-                vh.AddVert(vert);
+                    vert.position = vert3;
+                    vh.AddVert(vert);
 
-                vert.position = vert4;
-                //vert.uv0 = vert4uv;
-                vh.AddVert(vert);
-
-                // vert2 index: idx
-                // vert3 index: idx + 1
-                // vert4 index: idx + 2
-
-                vh.AddTriangle(vert0idx, vert1idx, idx);    // vert0, vert1, vert2
-                vh.AddTriangle(vert0idx, idx, idx + 1);     // vert0, vert2, vert3
-                vh.AddTriangle(idx, idx + 2, idx + 1);      // vert2, vert4, vert3
+                    vert.position = vert4;
+                    vh.AddVert(vert);
 
 
-                if (isTwistedRight)
-                {
+                    vh.AddTriangle(vert0idx, vert1idx, idx);    // vert0, vert1, vert2
+                    vh.AddTriangle(vert0idx, idx, idx + 1);     // vert0, vert2, vert3
+                    vh.AddTriangle(idx, idx + 2, idx + 1);      // vert2, vert4, vert3
+
                     vert0 = vert3;
                     vert0idx = idx + 1;
 
                     vert1 = vert4;
                     vert1idx = idx + 2;
+
+                    idx += 3;
                 }
-                else
+                else if (CalLineSegmentsIntersection(vert1.Value, point10l, point11l, point21l, out intersection))
                 {
+                    // twisted left
+
+                    vert2 = intersection;
+                    vert3 = point10r;
+                    vert4 = point11r;
+
+
+                    vert.position = vert2;
+                    vh.AddVert(vert);
+
+                    vert.position = vert3;
+                    vh.AddVert(vert);
+
+                    vert.position = vert4;
+                    vh.AddVert(vert);
+
+
+                    vh.AddTriangle(vert0idx, vert1idx, idx);    // vert0, vert1, vert2
+                    vh.AddTriangle(vert0idx, idx, idx + 1);     // vert0, vert2, vert3
+                    vh.AddTriangle(idx, idx + 2, idx + 1);      // vert2, vert4, vert3
+
                     vert0 = vert4;
                     vert0idx = idx + 2;
 
                     vert1 = vert2;
                     vert1idx = idx;
-                }
 
-                idx += 3;
+                    idx += 3;
+                }
+                else
+                {
+                    // straight
+
+                    vert2 = point10l;
+                    vert3 = point10r;
+
+
+                    vert.position = vert2;
+                    vh.AddVert(vert);
+
+                    vert.position = vert3;
+                    vh.AddVert(vert);
+
+
+                    vh.AddTriangle(vert0idx, vert1idx, idx);    // vert0, vert1, vert2
+                    vh.AddTriangle(vert0idx, idx, idx + 1);     // vert0, vert2, vert3
+
+                    vert0 = vert3;
+                    vert0idx = idx + 1;
+
+                    vert1 = vert2;
+                    vert1idx = idx;
+
+                    idx += 2;
+
+                }
             }
             else
             {
-
                 vert.position = point10l;
                 //vert.uv0 = new Vector2(1, 1);
                 vh.AddVert(vert);
@@ -207,7 +251,6 @@ public class UILineRendererUnit : MaskableGraphic
             //vh.AddTriangle(i * 4 + 0, i * 4 + 1, i * 4 + 2);
             //vh.AddTriangle(i * 4 + 0, i * 4 + 2, i * 4 + 3);
         }
-
     }
 
     void Update()
